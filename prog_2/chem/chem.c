@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#define BSIZE 1<<15
+
+
+long N,K;
+int A[2501][2501];
+int minHeat[2501][2501];
+
+
+char buffer[BSIZE];
+long bpos = 0L, bsize = 0L;
+
+long readLong() 
+{
+	long d = 0, x = 0;
+	char c;
+
+	while (1)  {
+		if (bpos >= bsize) {
+			bpos = 0;
+			if (feof(stdin)) return x;
+			bsize = fread(buffer, 1, BSIZE, stdin);
+		}
+		c = buffer[bpos++];
+		if (c >= '0' && c <= '9') { x = x*10 + (c-'0'); d = 1; }
+		else if (d == 1) return x;
+	}
+	return -1;
+}
+
+int Heat(int left, int right)
+{
+	return (A[right][right] - A[right][left-1] - A[left-1][right] + A[left-1][left-1]);
+}
+
+void divideconquer(int dd, int left, int right, int inLeft, int inRight)
+{
+	if(left > right)
+		return;
+	if(left == right)
+	{
+		minHeat[dd][left] = INT_MAX;
+		int findlimit = inLeft;
+		int t1,w;
+			for(w = inLeft; w <= inRight; w++)
+			{
+	    		t1 = minHeat[dd-1][w] + Heat(w+1, left);
+				if(t1 < minHeat[dd][left])
+				{
+				minHeat[dd][left] = t1	;
+			findlimit = t1;
+				}
+			}
+		return;
+	}
+	if (inRight>right-1) inRight=right-1;
+	int i;
+	if(inLeft == inRight)
+	{
+		for( i = left; i <= right; i++){
+			minHeat[dd][i] = INT_MAX;
+			int findlimit = inLeft;
+			int m,ii;
+			for(m = inLeft; m <= inRight; m++){
+	    			ii = minHeat[dd-1][m] + Heat(m+1, i);
+					if(ii < minHeat[dd][i])
+					{
+					minHeat[dd][i] = ii;
+					}
+				}
+			}
+		return;
+	}
+	int spasimo = (left + right) / 2;
+	int best;
+	minHeat[dd][spasimo] = INT_MAX;
+	int findlimit = inLeft;
+	int t,l;
+	for(l = inLeft; l <= inRight; l++)
+	{
+	    t = minHeat[dd-1][l] + Heat(l+1, spasimo);
+		if(t < minHeat[dd][spasimo])
+		{
+			minHeat[dd][spasimo] = t;
+			findlimit = l;
+		}
+	}
+	best = findlimit;
+	divideconquer(dd, left, spasimo-1, inLeft, best);
+	divideconquer(dd, spasimo+1, right, best, inRight);
+}
+
+
+int main(){
+	
+ N=readLong();
+ K=readLong();
+int i,j;
+ for(i=1;i<=N;i++){
+ 	for(j=1;j<=N;j++){
+ 		if(i!=j && j>i){
+ 			A[i][j]=readLong(); 		
+ 		}
+ 		if(j<i){
+ 			A[i][j]=A[j][i];
+ 		}
+ 	}
+ }
+ 
+ for(i = 1; i <= N; i++){
+    for( j = 1; j <= N; j++){
+			A[i][j] =A[i][j]+ A[i-1][j] + A[i][j-1] - A[i-1][j-1];
+	}
+ }
+
+ for( i = 1; i <= N; i++)
+		minHeat[1][i] = Heat(1, i);
+ for( i = 2; i <= K; i++)
+		divideconquer(i, 2, N, i-1, N);
+		
+	printf("%d\n",(minHeat[K][N]/2));
+	return 0;
+
+}
+
+
+
+
+
+
+
